@@ -10,9 +10,9 @@ Description: ================
         Django OAuth USP
         ================
         
-        Este package permite que usuários façam login utilizando a senha única USP.
+        Este pacote permite que usuários façam login utilizando a senha única USP.
         
-        Além da autenticação OAuth este package também possui migrations para o armazenamento dos
+        Além da autenticação OAuth este pacote também possui migrations para o armazenamento dos
         usuários no banco de dados.
         
         É recomendado que a estas migrations sejam rodaddas antes de qualquer outra migration, devido
@@ -76,7 +76,7 @@ Classifier: Environment :: Web Environment
 Classifier: Framework :: Django
 Classifier: Framework :: Django :: 3.1
 Classifier: Intended Audience :: Developers
-Classifier: License :: MIT
+Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8

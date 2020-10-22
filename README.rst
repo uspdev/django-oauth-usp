@@ -2,9 +2,9 @@
 Django OAuth USP
 ================
 
-Este package permite que usuários façam login utilizando a senha única USP.
+Este pacote permite que usuários façam login utilizando a senha única USP.
 
-Além da autenticação OAuth este package também possui migrations para o armazenamento dos
+Além da autenticação OAuth este pacote também possui migrations para o armazenamento dos
 usuários no banco de dados.
 
 É recomendado que a estas migrations sejam rodaddas antes de qualquer outra migration, devido
