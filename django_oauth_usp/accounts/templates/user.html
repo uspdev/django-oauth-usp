@@ -1,0 +1,29 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+    <ul>
+        <li>
+            Nome: {{ user.name }}
+        </li>
+        <li>
+            Tipo de usuário: {{ user.user_type }}
+        </li>
+        <li>
+            E-mail principal: {{ user.main_email }}
+        </li>
+        <li>
+            E-mail alternativo: {{ user.alternative_email }}
+        </li>
+        <li>
+            E-mail USP: {{ user.usp_email }}
+        </li>
+        <li>
+            Telefone: {{ user.formatted_phone }}
+        </li>
+        <li>
+            Data de cadastro: {{ user.date_joined }}
+        </li>
+    </ul>
+
+{% endblock content %}
