@@ -6,6 +6,7 @@ django_oauth_usp/settings.py
 django_oauth_usp.egg-info/PKG-INFO
 django_oauth_usp.egg-info/SOURCES.txt
 django_oauth_usp.egg-info/dependency_links.txt
+django_oauth_usp.egg-info/requires.txt
 django_oauth_usp.egg-info/top_level.txt
 django_oauth_usp/accounts/__init__.py
 django_oauth_usp/accounts/admin.py
