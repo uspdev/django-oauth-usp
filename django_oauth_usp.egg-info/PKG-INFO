@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: django-oauth-usp
-Version: 0.1
+Version: 0.2
 Summary: Um app do Django para autenticação utilizando o OAuth USP.
 Home-page: https://github.com/marcelosf/django-oauth-usp
 Author: Marcelo Schneider
