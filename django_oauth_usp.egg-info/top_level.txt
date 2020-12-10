@@ -1,1 +1,0 @@
-django_oauth_usp
