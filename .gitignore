@@ -1,2 +1,4 @@
 .oauth
 __pycache__
+.test
+django_oauth_usp.egg-info
