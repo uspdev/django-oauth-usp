@@ -26,7 +26,7 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'login'
     REQUIRED_FIELDS = ['name', 'user_type', 'main_email']
     EMAIL_FIELD = 'main_email'
-    ALLOWED_UNIDADES = settings.ALLOWED_UNIDADES
+    ALLOWED_UNIDADES = str(settings.ALLOWED_UNIDADES)
 
     class Meta:
         verbose_name = _('user')
