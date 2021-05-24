@@ -31,7 +31,7 @@ class LoginViewsUserLogedInTest(TestCase):
 
     def test_redirect_to_user_detail(self):
         """Loged in user should be redirect to user detail"""
-        expected = '/auth/user'
+        expected = '/user'
         self.assertEqual(self.resp.url, expected)
 
 
