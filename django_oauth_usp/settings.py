@@ -58,7 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'users.accounts.middleware.OAuthUspMiddleware',
+    'django_oauth_usp.accounts.middleware.OAuthUspMiddleware',
 ]
 
 DATABASES = {
