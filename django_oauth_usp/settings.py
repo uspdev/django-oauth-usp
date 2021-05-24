@@ -31,6 +31,7 @@ INSTALLED_APPS = [
 ]
 
 ALLOWED_UNIDADES = [14]
+REDIRECT_URI = '/user'
 
 TEMPLATES = [
     {
