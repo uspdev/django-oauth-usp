@@ -12,6 +12,7 @@ from .faker import data as user_data
 
 
 class LoginViewsTest(TestCase):
+    @mock_oauth
     def setUp(self):
         self.resp = self.client.get(r('accounts:login'))
 
@@ -21,6 +22,7 @@ class LoginViewsTest(TestCase):
 
 
 class LoginViewsUserLogedInTest(TestCase):
+    @mock_oauth
     def setUp(self):
         user_data['bind'] = '[{"codigoUnidade": "14"}]'
         self.user = UserModel.objects.create_user(**user_data)
@@ -79,6 +81,7 @@ class OAuthLoginTest(TestCase):
     def setUp(self):
         self.obj = OAuthLogin()
 
+    @mock_oauth
     def test_next_url(self):
         request = HttpRequest()
         session = SessionStore()
