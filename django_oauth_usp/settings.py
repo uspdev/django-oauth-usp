@@ -31,6 +31,8 @@ INSTALLED_APPS = [
 ]
 
 ALLOWED_UNIDADES = [14]
+REDIRECT_URI = '/user'
+REDIRECT_AFTER_LOGOUT_URL = '/login'
 
 TEMPLATES = [
     {
@@ -56,7 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'users.accounts.middleware.OAuthUspMiddleware',
+    'django_oauth_usp.accounts.middleware.OAuthUspMiddleware',
 ]
 
 DATABASES = {
@@ -80,3 +82,5 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+ROOT_URLCONF = 'django_oauth_usp.urls'
