@@ -5,7 +5,7 @@ from dj_database_url import parse as dburl
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 
-SECRET_KEY = 'ZJbaAgWWkkXjgJOCEreseSIEVVnXDRv+Wdlji7U0welqJ1LGLm+1JHM/T19kZZwtSR4'
+SECRET_KEY = 'alterar:my-secret-key'
 
 AUTH_USER_MODEL = 'accounts.UserModel'
 
