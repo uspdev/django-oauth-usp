@@ -82,3 +82,5 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+ROOT_URLCONF = 'django_oauth_usp.urls'
