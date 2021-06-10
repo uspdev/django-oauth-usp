@@ -84,3 +84,5 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 ROOT_URLCONF = 'django_oauth_usp.urls'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
