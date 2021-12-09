@@ -5,3 +5,4 @@ django_oauth_usp.egg-info
 dist
 .vscode
 *sqlite3
+.venv
