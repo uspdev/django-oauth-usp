@@ -7,7 +7,7 @@ Este pacote permite que usuários façam login utilizando a senha única USP.
 Além da autenticação OAuth este pacote também possui migrations para o armazenamento dos
 usuários no banco de dados.
 
-É recomendado que a estas migrations sejam rodaddas antes de qualquer outra migration, devido
+É recomendado que a estas migrations sejam rodadas antes de qualquer outra migration, devido
 a dificuldade de alteração do model User depois de realizada a primeira migration:
 `Using a custom user model when starting a project`__
 
@@ -20,7 +20,7 @@ Quick start
 
     INSTALLED_APPS = [
         ...
-        'polls',
+        'django_oauth_usp.accounts',
     ]
 
 2. Adicone o Middleware OAuthUspMiddleware::
@@ -32,21 +32,21 @@ Quick start
 
 3. No arquivo settings.py, informe o Model que será utilizado para armazenar os usuários::
 
-        AUTH_USER_MODEL= 'django_oauth_usp.UserModel'
+        AUTH_USER_MODEL= 'accounts.UserModel'
 
 4. Defina os parâmetro para OAuth::
 
-    OAUTH_CALLBACK_ID = callback_id_da_aplicação
+    OAUTH_CALLBACK_ID = 'callback_id_da_aplicação'
 
     AUTHLIB_OAUTH_CLIENTS = {
         'usp': {
-            'client_id': meu_client_id,
-            'client_secret': meu_secret_key
+            'client_id': 'meu_client_id',
+            'client_secret': 'meu_secret_key'
         }
     }
 
     #Rota utilizada para a view accounts_authorize
-    REDIRECT_URI = /auth/authorize
+    REDIRECT_URI = '/auth/authorize'
 
     #Lista com o código das unidades que poderão ter acesso.
     ALLOWED_UNIDADES = [12, 13, 14]
