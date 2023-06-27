@@ -10,7 +10,7 @@ setup(
     author_email="schneider.fei@gmail.com",
     packages=setuptools.find_packages(),
     install_requires=[
-        'Django>=3.2'
+        'Django>=3.2',
         'Authlib>=0.15.2',
         'requests>=2.24.0',
 
