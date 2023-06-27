@@ -30,7 +30,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content'
     ],
     install_requires=[
-        'Django>=3.2'
+        'Django>=3.2',
         'Authlib>=0.15.2',
         'requests>=2.24.0'
     ],
