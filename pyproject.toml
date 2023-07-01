@@ -7,6 +7,18 @@ license = "MIT"
 readme = "README.md"
 packages = [{include = "django_oauth_usp"}]
 
+classifiers = [
+    'Environment :: Web Environment',
+    'Framework :: Django',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Topic :: Internet :: WWW/HTTP',
+    'Topic :: Internet :: WWW/HTTP :: Dynamic Content'
+]
+
 [tool.poetry.dependencies]
 python = "^3.10"
 authlib = "^1.2.1"
