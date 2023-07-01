@@ -40,7 +40,7 @@ class AuthorizeViewTest(TestCase):
     def setUp(self):
         self.request = HttpRequest()
         query = QueryDict(
-            'oauth_token=12345oauth & oauth_verifier=12345veriifer')
+            'oauth_token=12345oauth&oauth_verifier=12345veriifer')
 
         self.request.GET = query
 
@@ -50,7 +50,8 @@ class AuthorizeViewTest(TestCase):
         request_token = dict(
             oauth_token='token123', oauth_token_secret='oauth_token_secret123',
             oauth_verifier='verifier123')
-        self.request.session['_usp_authlib_request_token_'] = request_token
+        data = {"data": {"request_token": request_token}}
+        self.request.session['_state_usp_12345oauth'] = data
 
         user = UserModel.objects.create_user(**user_data)
         setattr(user, 'wsuserid', 'oiuasd098')
