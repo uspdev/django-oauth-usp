@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "django-oauth-usp"
+version = "1.2.1"
+description = ""
+authors = ["Marcelo Schneider <schenider.fei@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "django_oauth_usp"}]
+
+classifiers = [
+    'Environment :: Web Environment',
+    'Framework :: Django',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Topic :: Internet :: WWW/HTTP',
+    'Topic :: Internet :: WWW/HTTP :: Dynamic Content'
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+authlib = "^1.2.1"
+requests = "^2.31.0"
+
+
+[tool.poetry.group.dev.dependencies]
+dj-database-url = "^2.0.0"
+django = "^4.2.2"
+faker = "^18.11.2"
+httpretty = "^1.1.4"
+django-extensions = "^3.2.3"
+coverage = "^7.2.7"
+tox = "^4.6.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
