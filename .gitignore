@@ -6,3 +6,5 @@ dist
 .vscode
 *sqlite3
 .venv
+.coverage
+.tox
