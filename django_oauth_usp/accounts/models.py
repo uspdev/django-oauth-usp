@@ -63,7 +63,12 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
                 return True
 
         return False
+    
+    def prepare_json_string(self, json_string: str):
+        prepared = json_string.replace("'", '"')
+        prepared = prepared.replace('None', '"None"')
+        return prepared
 
     def get_bind(self):
-        bind = self.bind.replace("'", '"')
+        bind = self.prepare_json_string(self.bind)
         return json.loads(bind)

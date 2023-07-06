@@ -71,8 +71,16 @@ class UserModelTest(TestCase):
         user = self.make_user(bind=bind)
         self.assertFalse(user.unidade_is_allowed())
 
+    def test_prepare_json_string(self):
+        json_string = "{'nome': 'Marc', 'cargo': None, 'idade': 30}"
+        expected = '{"nome": "Marc", "cargo": "None", "idade": 30}'
+        actual = self.obj.prepare_json_string(json_string)
+        self.assertEqual(actual, expected)
+    
     def make_user(self, **kwargs):
         default = dict(login='4444444', main_email='main@test.com', password='92874',
                        name='Marc Stold Further', user_type='I ')
         data = dict(default, **kwargs)
         return UserModel.objects.create_user(**data)
+    
+
