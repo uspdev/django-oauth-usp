@@ -108,7 +108,7 @@ class UserDetailViewLogeInTest(TestCase):
         self.assertEqual(302, resp.status_code)
 
     def test_template(self):
-        self.assertTemplateUsed(self.resp, 'main.html')
+        self.assertTemplateUsed(self.resp, 'account_main.html')
         self.assertTemplateUsed(self.resp, 'user.html')
 
     def test_context_has_user(self):
