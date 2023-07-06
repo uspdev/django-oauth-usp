@@ -76,11 +76,66 @@ class UserModelTest(TestCase):
         expected = '{"nome": "Marc", "cargo": "None", "idade": 30}'
         actual = self.obj.prepare_json_string(json_string)
         self.assertEqual(actual, expected)
+
+    def test_has_attributes(self):
+        attributes = (
+            "get_funcao",
+            "get_vinculo",
+            "get_setor"  
+        )
+
+        for attr in attributes:
+            with self.subTest():
+                message = f"{attr} not found"
+                self.assertTrue(hasattr(self.obj, attr), msg=message)
+
+    def test_get_funcao(self):
+        vinculo = self.make_vinculo()
+        user = self.make_user(**{"bind": str(vinculo)})
+        actual = user.get_funcao()
+        expected = "Informática"
+        self.assertEqual(actual, expected)
+
+    def test_get_vinculo(self):
+        vinculo = self.make_vinculo()
+        user = self.make_user(**{"bind": str(vinculo)})
+        actual = user.get_vinculo()
+        expected = ["SERVIDOR", "ALUNOCEU"]
+        self.assertEqual(actual, expected)
     
+    def test_get_setor(self):
+        vinculo = self.make_vinculo()
+        user = self.make_user(**{"bind": str(vinculo)})
+        actual = user.get_setor()
+        exepcted = "GTI-14"
+        self.assertEqual(actual, exepcted)
+
     def make_user(self, **kwargs):
         default = dict(login='4444444', main_email='main@test.com', password='92874',
                        name='Marc Stold Further', user_type='I ')
         data = dict(default, **kwargs)
         return UserModel.objects.create_user(**data)
-    
 
+    def make_vinculo(self):
+        return [
+            {
+                "tipoVinculo":"SERVIDOR",
+                "codigoSetor":63,
+                "nomeAbreviadoSetor":"GTI-14",
+                "nomeSetor":"Gestão da Tecnologia da Informação",
+                "codigoUnidade":14,
+                "siglaUnidade":"IAG",
+                "nomeUnidade":"Instituto de Astronomia, Geofísica e Ciências Atmosféricas",
+                "tipoFuncao": "Informática"
+            },
+            {
+                "tipoVinculo":"ALUNOCEU",
+                "codigoSetor":0,
+                "nomeAbreviadoSetor": None,
+                "nomeSetor": None,
+                "codigoUnidade":3,
+                "siglaUnidade":"EP",
+                "nomeUnidade":"Escola Politécnica",
+                "tipoFuncao": ""
+            }
+        ]
