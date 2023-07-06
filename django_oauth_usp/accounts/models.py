@@ -72,3 +72,21 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
     def get_bind(self):
         bind = self.prepare_json_string(self.bind)
         return json.loads(bind)
+
+    def get_funcao(self):
+        bind = self.get_bind()
+        funcao = [item.get("tipoFuncao") for item in bind if item["tipoVinculo"] == "SERVIDOR"][0]
+        if funcao:
+            return funcao
+        return None
+
+    def get_vinculo(self):
+        bind = self.get_bind()
+        return [item.get("tipoVinculo") for item in bind]
+
+    def get_setor(self):
+        bind = self.get_bind()
+        setor = [item.get("nomeAbreviadoSetor") for item in bind if item["tipoVinculo"] == "SERVIDOR"][0]
+        if setor:
+            return setor
+        return None
