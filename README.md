@@ -55,6 +55,15 @@ a dificuldade de alteração do model User depois de realizada a primeira migrat
     ALLOWED_UNIDADES = [12, 13, 14]
     ```
 
+    `ALLOWED_UNIDADES` é obrigatório:
+
+    * `[12, 13, 14]`: só entra quem tem vínculo com uma dessas unidades.
+    * `'__all__'`: entra qualquer pessoa com Senha Única USP, com ou sem vínculo.
+    * `[]`: só superusuários entram (o `manage.py check` mostra um aviso).
+
+    Se `ALLOWED_UNIDADES` não for definido ou tiver outro tipo, o `manage.py check`
+    (e também o `runserver` e o `migrate`) mostra um erro, e ninguém consegue entrar.
+
 5. Rode as migrations::
 
     ```

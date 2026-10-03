@@ -2,7 +2,7 @@ from unittest import mock
 
 from authlib.integrations.base_client import OAuthError
 from django.contrib.auth import authenticate
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.shortcuts import resolve_url as r
 from django.http import HttpRequest, QueryDict
 from django.contrib.sessions.backends.db import SessionStore
@@ -211,6 +211,14 @@ class AuthorizeFlowTest(TestCase):
             self.assertEqual(403, resp.status_code)
             self.assertEqual('Ana Pereira', UserModel.objects.get().name)
             self.assertNotIn('_auth_user_id', self.client.session)
+
+    @override_settings(ALLOWED_UNIDADES='__all__')
+    def test_all_unidades_logs_in_anyone(self):
+        resource = {k: v for k, v in RESOURCE.items() if k != 'vinculo'}
+        resp = self.authorize(resource)
+        with self.subTest():
+            self.assertEqual(302, resp.status_code)
+            self.assertIn('_auth_user_id', self.client.session)
 
     def test_superuser_from_other_unidade_is_logged_in(self):
         """Mesma regra do middleware: superusuários são liberados."""

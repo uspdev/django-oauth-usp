@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.mail import send_mail
 from django.conf import settings
 
+from .checks import ALL_UNIDADES
 from .managers import UserManager
 
 
@@ -52,8 +53,15 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
         return self._get_bind_servidor() is not None
 
     def unidade_is_allowed(self):
-        """Compara os códigos exatos: a unidade 1 não pode passar por estar contida em 14."""
-        allowed = {str(codigo) for codigo in settings.ALLOWED_UNIDADES}
+        """
+        Compara os códigos exatos: a unidade 1 não pode passar por estar contida
+        em 14. Com ALLOWED_UNIDADES = '__all__', qualquer vínculo (ou nenhum) é
+        aceito. Sem a configuração, ninguém é aceito; o system check avisa.
+        """
+        allowed = getattr(settings, 'ALLOWED_UNIDADES', ())
+        if allowed == ALL_UNIDADES:
+            return True
+        allowed = {str(codigo) for codigo in allowed}
         return any(str(item.get('codigoUnidade')) in allowed
                    for item in self.get_bind())
 
