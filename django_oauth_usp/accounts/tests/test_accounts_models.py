@@ -85,6 +85,23 @@ class UserModelTest(TestCase):
         user = self.make_user(bind="[{'codigoUnidade': 12}]")
         self.assertTrue(user.unidade_is_allowed())
 
+    @override_settings(ALLOWED_UNIDADES='__all__')
+    def test_all_unidades(self):
+        for bind in ("[{'codigoUnidade': 1}]", ''):
+            with self.subTest(bind=bind):
+                self.assertTrue(UserModel(bind=bind).unidade_is_allowed())
+
+    @override_settings(ALLOWED_UNIDADES=[])
+    def test_empty_allowed_unidades(self):
+        self.assertFalse(UserModel(bind="[{'codigoUnidade': 14}]").unidade_is_allowed())
+
+    @override_settings()
+    def test_missing_allowed_unidades(self):
+        """Sem a configuração, ninguém entra (em vez de erro 500)."""
+        from django.conf import settings
+        del settings.ALLOWED_UNIDADES
+        self.assertFalse(UserModel(bind="[{'codigoUnidade': 14}]").unidade_is_allowed())
+
     def test_get_bind_json(self):
         vinculo = self.make_vinculo()
         user = self.make_user(bind=json.dumps(vinculo))
