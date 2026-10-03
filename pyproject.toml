@@ -1,6 +1,6 @@
 [project]
 name = "django-oauth-usp"
-version = "2.0.0"
+version = "2.1.0"
 description = "Login com a Senha Única USP (OAuth) para projetos Django."
 authors = [{ name = "Marcelo Schneider", email = "schenider.fei@gmail.com" }]
 license = "MIT"
