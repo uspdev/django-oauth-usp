@@ -185,6 +185,43 @@ class AuthorizeFlowTest(TestCase):
             self.assertFalse(UserModel.objects.get().is_active)
             self.assertNotIn('_auth_user_id', self.client.session)
 
+    def test_other_unidade_is_not_logged_in(self):
+        """Quem não é de ALLOWED_UNIDADES não entra nem tem os dados gravados."""
+        vinculo = [{'tipoVinculo': 'ALUNOGR', 'codigoUnidade': 1}]
+        resp = self.authorize(dict(RESOURCE, vinculo=vinculo))
+        with self.subTest():
+            self.assertEqual(403, resp.status_code)
+            self.assertFalse(UserModel.objects.exists())
+            self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_without_bind_is_not_logged_in(self):
+        resource = {k: v for k, v in RESOURCE.items() if k != 'vinculo'}
+        resp = self.authorize(resource)
+        with self.subTest():
+            self.assertEqual(403, resp.status_code)
+            self.assertFalse(UserModel.objects.exists())
+
+    def test_existing_user_moved_to_other_unidade_is_not_logged_in(self):
+        """Os dados já gravados não são atualizados com o vínculo novo."""
+        self.authorize()
+        self.client.logout()
+        resp = self.authorize(dict(RESOURCE, nomeUsuario='Outro nome',
+                                   vinculo=[{'codigoUnidade': 1}]))
+        with self.subTest():
+            self.assertEqual(403, resp.status_code)
+            self.assertEqual('Ana Pereira', UserModel.objects.get().name)
+            self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_superuser_from_other_unidade_is_logged_in(self):
+        """Mesma regra do middleware: superusuários são liberados."""
+        self.authorize()
+        UserModel.objects.update(is_superuser=True)
+        self.client.logout()
+        resp = self.authorize(dict(RESOURCE, vinculo=[{'codigoUnidade': 1}]))
+        with self.subTest():
+            self.assertEqual(302, resp.status_code)
+            self.assertIn('_auth_user_id', self.client.session)
+
     def test_oauth_error_is_bad_request(self):
         with mock.patch.object(OAuthUsp, 'get_resource', side_effect=OAuthError('Missing "oauth_token"')):
             resp = self.client.get(r('accounts:authorize'))

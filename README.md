@@ -74,6 +74,10 @@ a dificuldade de alteração do model User depois de realizada a primeira migrat
 
 ## Login e logout
 
+* Quem não tem vínculo com uma unidade de `ALLOWED_UNIDADES` recebe 403 já no
+  retorno da Senha Única: o usuário não é gravado nem logado. Superusuários já
+  cadastrados são liberados. O `OAuthUspMiddleware` continua barrando quem já
+  estava logado, por exemplo depois de uma mudança na lista.
 * O parâmetro `next` do login (`/auth/login?next=/pagina`) só é aceito para
   endereços do próprio site; qualquer outro é trocado por `/`.
 * O logout só aceita POST com o token CSRF:
@@ -134,6 +138,9 @@ A versão 2.0.0 corrige falhas de segurança e muda alguns comportamentos:
   Usuários desativados no admin continuam bloqueados (recebem 403 no login).
 * **`ALLOWED_UNIDADES` compara os códigos exatos.** Antes, a unidade 1 era aceita quando
   14 estava na lista. O middleware libera superusuários e o logout.
+* **Quem não é das unidades permitidas não entra.** Antes, o login era concluído, o
+  usuário era gravado e só o middleware respondia 403 nas páginas seguintes, sem
+  deixar a pessoa sair. Agora o `authorize` responde 403 sem gravar nem logar.
 * **O vínculo é gravado em JSON.** Registros antigos continuam sendo lidos. O método
   `prepare_json_string` foi removido.
 * Erros no retorno do OAuth (login recusado, token expirado) respondem 400 em vez de 500.

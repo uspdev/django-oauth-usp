@@ -46,11 +46,14 @@ class OAuthAuthorize(View):
         try:
             self.profile = self.oauth_usp.get_resource(request)
             self.data_transform()
-            self.persist_user()
         except (OAuthError, ValueError):
             # Login recusado, token expirado ou resposta inválida da USP.
             return HttpResponseBadRequest(
                 'Não foi possível concluir o login com a Senha Única USP.')
+        if not self.unidade_is_allowed():
+            return HttpResponseForbidden(
+                'Seu vínculo com a USP não dá acesso a este sistema.')
+        self.persist_user()
         if not self.user.is_active:
             return HttpResponseForbidden()
         self.login_user(request)
@@ -62,6 +65,16 @@ class OAuthAuthorize(View):
         missing = {'login', 'name', 'user_type'} - self.profile.keys()
         if missing:
             raise ValueError(f'Dados ausentes na resposta da USP: {sorted(missing)}')
+
+    def unidade_is_allowed(self):
+        """
+        Barra quem não é de ALLOWED_UNIDADES antes de gravar os dados e abrir a
+        sessão. Usa a mesma regra do middleware, que libera superusuários.
+        """
+        if UserModel(bind=self.profile.get('bind', '')).unidade_is_allowed():
+            return True
+        return UserModel.objects.filter(login=self.profile['login'],
+                                        is_superuser=True).exists()
 
     def persist_user(self):
         self.user, create = UserModel.objects.update_or_create_user(
