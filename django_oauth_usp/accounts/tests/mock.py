@@ -27,7 +27,7 @@ token = '123456'
 secret = '123456789'
 verifier = '778899'
 
-resource = '{"loginUsuario":"login_test", "nomeUsuario":"Name test", "tipoUsuario":"I", "emailPrincipalUsuario":"test@test.com"}'
+resource = '{"loginUsuario":"login_test", "nomeUsuario":"Name test", "tipoUsuario":"I", "emailPrincipalUsuario":"test@test.com", "vinculo":[{"tipoVinculo":"SERVIDOR", "codigoUnidade":14}]}'
 
 
 def mock_oauth_uri():

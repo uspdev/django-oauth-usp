@@ -1,39 +1,37 @@
-[tool.poetry]
+[project]
 name = "django-oauth-usp"
-version = "1.2.2"
-description = ""
-authors = ["Marcelo Schneider <schenider.fei@gmail.com>"]
+version = "2.0.0"
+description = "Login com a Senha Única USP (OAuth) para projetos Django."
+authors = [{ name = "Marcelo Schneider", email = "schenider.fei@gmail.com" }]
 license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
-packages = [{include = "django_oauth_usp"}]
-
+requires-python = ">=3.10"
 classifiers = [
-    'Environment :: Web Environment',
-    'Framework :: Django',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT License',
-    'Operating System :: OS Independent',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
-    'Topic :: Internet :: WWW/HTTP',
-    'Topic :: Internet :: WWW/HTTP :: Dynamic Content'
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+dependencies = [
+    "authlib>=1.3.1",
+    "django>=4.2",
+    "requests>=2.32",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.10"
-authlib = "^1.2.1"
-requests = "^2.31.0"
-
-
-[tool.poetry.group.dev.dependencies]
-dj-database-url = "^2.0.0"
-django = "^4.2.2"
-faker = "^18.11.2"
-httpretty = "^1.1.4"
-django-extensions = "^3.2.3"
-coverage = "^7.2.7"
-tox = "^4.6.3"
+[dependency-groups]
+dev = [
+    "coverage>=7.2",
+    "faker>=18.11",
+    "httpretty>=1.1.4",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = ""

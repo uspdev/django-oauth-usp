@@ -1,4 +1,6 @@
-from django.test import TestCase
+import json
+
+from django.test import TestCase, override_settings
 from django.core import mail
 from django.contrib.auth.models import AbstractBaseUser
 
@@ -71,11 +73,52 @@ class UserModelTest(TestCase):
         user = self.make_user(bind=bind)
         self.assertFalse(user.unidade_is_allowed())
 
-    def test_prepare_json_string(self):
-        json_string = "{'nome': 'Marc', 'cargo': None, 'idade': 30}"
-        expected = '{"nome": "Marc", "cargo": "None", "idade": 30}'
-        actual = self.obj.prepare_json_string(json_string)
-        self.assertEqual(actual, expected)
+    def test_unidade_is_compared_exactly(self):
+        """Com ALLOWED_UNIDADES = [14], as unidades 1 e 4 não podem passar."""
+        for i, codigo in enumerate((1, 4, '1')):
+            with self.subTest(codigo=codigo):
+                user = self.make_user(login=f'login-{i}', bind=json.dumps([{'codigoUnidade': codigo}]))
+                self.assertFalse(user.unidade_is_allowed())
+
+    @override_settings(ALLOWED_UNIDADES=[12])
+    def test_unidade_is_allowed_reads_settings(self):
+        user = self.make_user(bind="[{'codigoUnidade': 12}]")
+        self.assertTrue(user.unidade_is_allowed())
+
+    def test_get_bind_json(self):
+        vinculo = self.make_vinculo()
+        user = self.make_user(bind=json.dumps(vinculo))
+        self.assertEqual(vinculo, user.get_bind())
+
+    def test_get_bind_legacy_repr_with_apostrophe(self):
+        """Registros antigos têm o repr do Python, com aspas simples, None e apóstrofos."""
+        vinculo = [{'tipoVinculo': 'SERVIDOR', 'nomeSetor': "Laboratório D'Ávila", 'nomeAbreviadoSetor': None}]
+        user = self.make_user(bind=str(vinculo))
+        self.assertEqual(vinculo, user.get_bind())
+
+    def test_get_bind_empty_or_invalid(self):
+        for bind in ('', 'None', '{', '{"a": 1}', '[1, 2]'):
+            with self.subTest(bind=bind):
+                self.obj.bind = bind
+                self.assertEqual([], self.obj.get_bind())
+
+    def test_without_servidor_bind(self):
+        user = self.make_user(bind="[{'tipoVinculo': 'ALUNOGR'}, {'codigoUnidade': 14}]")
+        with self.subTest():
+            self.assertFalse(user.is_servidor())
+            self.assertIsNone(user.get_funcao())
+            self.assertIsNone(user.get_setor())
+            self.assertEqual(['ALUNOGR', None], user.get_vinculo())
+
+    def test_get_short_name_empty(self):
+        self.assertEqual('', UserModel(name='').get_short_name())
+
+    def test_create_user_without_password(self):
+        """Usuários do OAuth não podem entrar por formulário de senha."""
+        user = self.make_user(password=None, wsuserid='ws-123')
+        with self.subTest():
+            self.assertFalse(user.has_usable_password())
+            self.assertFalse(user.check_password('ws-123'))
 
     def test_has_attributes(self):
         attributes = (

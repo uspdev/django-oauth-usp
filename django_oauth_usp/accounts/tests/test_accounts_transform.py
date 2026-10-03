@@ -1,3 +1,5 @@
+import json
+
 from django.test import TestCase
 
 from ..transform import Transform, Mapper
@@ -15,6 +17,15 @@ class TransformTest(TestCase):
         expected = fake.resource_transformed()
         resp = self.obj.transform_data(fake.resource())
         self.assertDictEqual(expected, resp)
+
+    def test_bind_is_saved_as_json(self):
+        vinculo = [{'tipoVinculo': 'SERVIDOR', 'nomeSetor': "D'Ávila", 'tipoFuncao': None}]
+        resp = self.obj.transform_data({'vinculo': vinculo})
+        self.assertEqual(vinculo, json.loads(resp['bind']))
+
+    def test_none_becomes_empty(self):
+        resp = self.obj.transform_data({'emailAlternativoUsuario': None})
+        self.assertEqual('', resp['alternative_email'])
 
 
 class MapperTest(TestCase):
