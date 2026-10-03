@@ -1,38 +1,37 @@
-from django.views.generic import RedirectView, View
-from django.contrib.auth import login, authenticate, logout
-from django.shortcuts import redirect, render, resolve_url as r
+from authlib.integrations.base_client import OAuthError
+from django.views.generic import View
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.shortcuts import redirect, render, resolve_url as r
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 from django.conf import settings
 
 from .oauth import OAuthUsp
 from .transform import Transform
 from .models import UserModel
 
-REDIRECT_AFTER_LOGOUT_URL = getattr(settings, 'REDIRECT_AFTER_LOGOUT_URL')
+
+def is_safe_url(request, url):
+    """Só aceita endereços do próprio site, para o login não virar um open redirect."""
+    return url_has_allowed_host_and_scheme(
+        url, allowed_hosts={request.get_host()}, require_https=request.is_secure())
 
 
-class OAuthLogin(RedirectView):
+class OAuthLogin(View):
     def get(self, request, *args, **kwargs):
-        self.detail_if_logedin(request)
-        self.set_next_url(request)
-        return super().get(request, *args, **kwargs)
-
-    def get_redirect_url(self, *args, **kwargs):
-        return self.redirect_uri.url
-
-    def setup(self, request, *args, **kwargs):
-        oauth_usp = OAuthUsp()
-        self.redirect_uri = oauth_usp.get_authorize_redirect(request)
-        return super().setup(request, *args, **kwargs)
-
-    def detail_if_logedin(self, request):
         if request.user.is_authenticated:
-            self.redirect_uri = redirect(r('accounts:user_detail'))
+            return redirect(r('accounts:user_detail'))
+        self.set_next_url(request)
+        # Só pede o token à USP quando de fato vai redirecionar para o login.
+        return OAuthUsp().get_authorize_redirect(request)
 
     def set_next_url(self, request):
-        request.session['next'] = '/'
-        if 'next' in request.GET:
-            request.session['next'] = request.GET['next']
+        next_url = request.GET.get('next', '/')
+        if not is_safe_url(request, next_url):
+            next_url = '/'
+        request.session['next'] = next_url
 
 
 accounts_login = OAuthLogin.as_view()
@@ -44,31 +43,38 @@ class OAuthAuthorize(View):
         return super().setup(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        self.profile = self.oauth_usp.get_resource(request)
-        self.data_transform()
-        self.persist_user()
-        self.authenticate_user(request)
-        redirect_path = self.get_redirect_path(request)
-        return redirect(redirect_path)
+        try:
+            self.profile = self.oauth_usp.get_resource(request)
+            self.data_transform()
+            self.persist_user()
+        except (OAuthError, ValueError):
+            # Login recusado, token expirado ou resposta inválida da USP.
+            return HttpResponseBadRequest(
+                'Não foi possível concluir o login com a Senha Única USP.')
+        if not self.user.is_active:
+            return HttpResponseForbidden()
+        self.login_user(request)
+        return redirect(self.get_redirect_path(request))
 
     def data_transform(self):
         transform = Transform()
         self.profile = transform.transform_data(self.profile)
+        missing = {'login', 'name', 'user_type'} - self.profile.keys()
+        if missing:
+            raise ValueError(f'Dados ausentes na resposta da USP: {sorted(missing)}')
 
     def persist_user(self):
         self.user, create = UserModel.objects.update_or_create_user(
             **self.profile)
 
-    def authenticate_user(self, request):
-        user = authenticate(request, username=self.user.login,
-                            password=self.user.wsuserid)
-        if user:
-            login(request=request, user=user)
+    def login_user(self, request):
+        # A identidade já foi confirmada pela USP; não há senha a verificar.
+        login(request, self.user, backend=settings.AUTHENTICATION_BACKENDS[0])
 
     def get_redirect_path(self, request):
-        next_path = request.session.get('next')
-        if next_path:
-            return request.session.pop('next')
+        next_path = request.session.pop('next', None)
+        if next_path and is_safe_url(request, next_path):
+            return next_path
         return r('accounts:user_detail')
 
 
@@ -81,6 +87,8 @@ def user_detail(request):
     return render(request, 'user.html', context=context)
 
 
+@require_POST
 def user_logout(request):
+    """Só por POST (com CSRF), para outro site não conseguir deslogar o usuário."""
     logout(request)
-    return redirect(REDIRECT_AFTER_LOGOUT_URL)
+    return redirect(getattr(settings, 'REDIRECT_AFTER_LOGOUT_URL', '/'))

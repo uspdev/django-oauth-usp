@@ -15,19 +15,18 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.10.12 , 3.11.4]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        resolution: [highest]
+        include:
+          # Versões mínimas declaradas no pyproject (Django 4.2, Authlib 1.3.1).
+          - python-version: "3.10"
+            resolution: lowest-direct
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install tox
     - name: Run Tests
-      run: |
-        tox
+      run: uv run --isolated --resolution ${{ matrix.resolution }} python manage.py test

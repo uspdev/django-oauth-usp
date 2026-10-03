@@ -17,35 +17,13 @@ class UserManager(BaseUserManager):
                           is_active=True, is_superuser=is_superuser,
                           last_login=now, date_joined=now, **extra_fields)
 
-        if not password:
-            password = extra_fields.get('wsuserid')
-
-        user.set_password(password)
-        user.save(using=self.db)
+        # Usuários do OAuth não têm senha: entram só pela Senha Única USP.
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save(using=self._db)
         return user
-
-    def _update_or_create_user(self, login, name, user_type, main_email,
-                               password, is_staff, is_superuser,
-                               **extra_fields):
-
-        now = timezone.now()
-        self._validate_fields(login=login, name=name, user_type=user_type)
-
-        main_email = self.normalize_email(main_email)
-        user_data = dict(name=name, user_type=user_type, main_email=main_email,
-                         is_staff=is_staff, is_active=True,
-                         is_superuser=is_superuser, last_login=now,
-                         date_joined=now, **extra_fields)
-
-        user, create = self.model.objects.update_or_create(login=login,
-                                                           defaults=user_data)
-        if not password:
-            password = extra_fields.get('wsuserid')
-
-        user.set_password(password)
-        user.save(using=self.db)
-
-        return (user, create)
 
     def _validate_fields(self, login, name, user_type):
         if not login:
@@ -63,15 +41,32 @@ class UserManager(BaseUserManager):
 
     def update_or_create_user(self, login, name, user_type, main_email=None,
                               password=None, **extra_fields):
-        return self._update_or_create_user(login, name, user_type, main_email,
-                                           password, False, False,
-                                           **extra_fields)
+        """
+        Cria o usuário ou atualiza só os dados de perfil vindos do OAuth.
+        Permissões (is_staff, is_superuser), is_active e date_joined são
+        definidos apenas na criação, para que o admin possa desativar ou
+        promover usuários sem que o próximo login desfaça a alteração.
+        """
+        self._validate_fields(login=login, name=name, user_type=user_type)
+
+        user = self.filter(login=login).first()
+        if user is None:
+            user = self._create_user(login, name, user_type, main_email,
+                                     password, False, False, **extra_fields)
+            return (user, True)
+
+        profile = dict(name=name, user_type=user_type,
+                       main_email=self.normalize_email(main_email),
+                       **extra_fields)
+        for field, value in profile.items():
+            setattr(user, field, value)
+        if password:
+            user.set_password(password)
+        user.save(using=self._db)
+        return (user, False)
 
     def create_superuser(self, login, name, user_type, main_email,
                          password, **extra_fields):
 
-        user = self._create_user(login, name, user_type, main_email, password,
+        return self._create_user(login, name, user_type, main_email, password,
                                  True, True, **extra_fields)
-        user.is_active = True
-        user.save(using=self._db)
-        return user

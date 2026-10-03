@@ -1,4 +1,8 @@
-from django.test import TestCase
+from unittest import mock
+
+from authlib.integrations.base_client import OAuthError
+from django.contrib.auth import authenticate
+from django.test import RequestFactory, TestCase
 from django.shortcuts import resolve_url as r
 from django.http import HttpRequest, QueryDict
 from django.contrib.sessions.backends.db import SessionStore
@@ -7,6 +11,7 @@ from django.test import Client
 
 from ..views import OAuthAuthorize, OAuthLogin
 from ..models import UserModel
+from ..oauth import OAuthUsp
 from .mock import mock_oauth
 from .faker import data as user_data
 
@@ -79,22 +84,117 @@ class AuthorizeViewTest(TestCase):
 
 
 class OAuthLoginTest(TestCase):
-    def setUp(self):
-        self.obj = OAuthLogin()
+    def login(self, **params):
+        request = RequestFactory().get(r('accounts:login'), params)
+        request.session = SessionStore()
+        request.user = AnonymousUser()
+        OAuthLogin.as_view()(request)
+        return request.session.get('next')
 
     @mock_oauth
     def test_next_url(self):
-        request = HttpRequest()
-        session = SessionStore()
+        self.assertEqual('/', self.login())
 
-        setattr(request, 'session', session)
-        setattr(request, 'user', AnonymousUser())
+    @mock_oauth
+    def test_next_url_same_site(self):
+        self.assertEqual('/itens/1?a=b', self.login(next='/itens/1?a=b'))
 
-        self.obj.setup(request)
-        self.obj.get(request)
+    @mock_oauth
+    def test_next_url_other_site_is_ignored(self):
+        for url in ('https://evil.com/', '//evil.com/', 'javascript:alert(1)', '/\\evil.com'):
+            with self.subTest(url=url):
+                self.assertEqual('/', self.login(next=url))
 
-        expected = '/'
-        self.assertEqual(self.obj.request.session.get('next'), expected)
+    def test_does_not_call_usp_when_logged_in(self):
+        """Usuário logado vai para os dados da conta sem pedir token à USP."""
+        self.client.force_login(UserModel.objects.create_user(**dict(user_data, login='logado')))
+        with mock.patch.object(OAuthUsp, 'get_authorize_redirect') as authorize:
+            resp = self.client.get(r('accounts:login'))
+        with self.subTest():
+            self.assertRedirects(resp, r('accounts:user_detail'), fetch_redirect_response=False)
+            authorize.assert_not_called()
+
+
+RESOURCE = {
+    'loginUsuario': '1234567',
+    'nomeUsuario': 'Ana Pereira',
+    'tipoUsuario': 'I',
+    'emailPrincipalUsuario': 'ana@usp.br',
+    'emailAlternativoUsuario': None,
+    'wsuserid': 'ws-ana',
+    'vinculo': [{'tipoVinculo': 'SERVIDOR', 'codigoUnidade': 14, 'nomeSetor': "D'Ávila"}],
+}
+
+
+class AuthorizeFlowTest(TestCase):
+    def authorize(self, resource=RESOURCE, next_url=None):
+        if next_url is not None:
+            session = self.client.session
+            session['next'] = next_url
+            session.save()
+        with mock.patch.object(OAuthUsp, 'get_resource', return_value=resource):
+            return self.client.get(r('accounts:authorize'))
+
+    def test_login_and_redirect_to_next(self):
+        resp = self.authorize(next_url='/itens')
+        with self.subTest():
+            self.assertRedirects(resp, '/itens', fetch_redirect_response=False)
+            self.assertEqual(str(UserModel.objects.get().pk), self.client.session['_auth_user_id'])
+
+    def test_unsafe_next_in_session_is_ignored(self):
+        resp = self.authorize(next_url='https://evil.com/')
+        self.assertRedirects(resp, r('accounts:user_detail'), fetch_redirect_response=False)
+
+    def test_user_has_no_usable_password(self):
+        self.authorize()
+        user = UserModel.objects.get()
+        with self.subTest():
+            self.assertFalse(user.has_usable_password())
+            self.assertIsNone(authenticate(username='1234567', password='ws-ana'))
+
+    def test_bind_saved_as_json(self):
+        self.authorize()
+        self.assertEqual(RESOURCE['vinculo'], UserModel.objects.get().get_bind())
+
+    def test_none_is_saved_as_empty(self):
+        self.authorize()
+        self.assertEqual('', UserModel.objects.get().alternative_email)
+
+    def test_second_login_keeps_admin_changes(self):
+        """Permissões, desativação e data de cadastro não podem ser desfeitas pelo login."""
+        self.authorize()
+        user = UserModel.objects.get()
+        joined = user.date_joined
+        UserModel.objects.filter(pk=user.pk).update(is_staff=True, is_superuser=True)
+        self.client.logout()
+        self.authorize(dict(RESOURCE, nomeUsuario='Ana P. Souza'))
+        user.refresh_from_db()
+        with self.subTest():
+            self.assertTrue(user.is_staff)
+            self.assertTrue(user.is_superuser)
+            self.assertEqual(joined, user.date_joined)
+            self.assertEqual('Ana P. Souza', user.name)
+
+    def test_inactive_user_is_not_logged_in(self):
+        self.authorize()
+        UserModel.objects.update(is_active=False)
+        self.client.logout()
+        resp = self.authorize()
+        with self.subTest():
+            self.assertEqual(403, resp.status_code)
+            self.assertFalse(UserModel.objects.get().is_active)
+            self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_oauth_error_is_bad_request(self):
+        with mock.patch.object(OAuthUsp, 'get_resource', side_effect=OAuthError('Missing "oauth_token"')):
+            resp = self.client.get(r('accounts:authorize'))
+        self.assertEqual(400, resp.status_code)
+
+    def test_invalid_resource_is_bad_request(self):
+        resp = self.authorize({'nomeUsuario': 'Sem login'})
+        with self.subTest():
+            self.assertEqual(400, resp.status_code)
+            self.assertFalse(UserModel.objects.exists())
 
 
 class UserDetailViewLogeInTest(TestCase):
@@ -135,10 +235,26 @@ class OAuthLogoutTest(TestCase):
     def setUp(self):
         user = UserModel.objects.create_user(**user_data)
         self.client.force_login(user)
-        self.resp = self.client.get(r('accounts:logout'))
+        self.resp = self.client.post(r('accounts:logout'))
 
     def test_status_code(self):
         self.assertEqual(302, self.resp.status_code)
 
     def test_user_logged_out(self):
         self.assertFalse(self.resp.wsgi_request.user.is_authenticated)
+
+
+class OAuthLogoutGetTest(TestCase):
+    def test_get_not_allowed(self):
+        """Por GET, outro site poderia deslogar o usuário com um <img>."""
+        self.client.force_login(UserModel.objects.create_user(**user_data))
+        resp = self.client.get(r('accounts:logout'))
+        with self.subTest():
+            self.assertEqual(405, resp.status_code)
+            self.assertIn('_auth_user_id', self.client.session)
+
+    def test_requires_csrf(self):
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(UserModel.objects.create_user(**user_data))
+        resp = client.post(r('accounts:logout'))
+        self.assertEqual(403, resp.status_code)

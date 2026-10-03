@@ -1,3 +1,6 @@
+import json
+
+
 class Mapper:
     def get_mapper(self):
         return {
@@ -21,6 +24,14 @@ class Transform:
         transformed = dict()
         for key in mapper:
             if key in data:
-                transformed.update({mapper.get(key): str(data.get(key))})
+                transformed.update({mapper.get(key): self.to_text(data.get(key))})
 
         return transformed
+
+    def to_text(self, value):
+        """None vira texto vazio; listas e dicts (como o vínculo) são gravados em JSON."""
+        if value is None:
+            return ''
+        if isinstance(value, (list, dict)):
+            return json.dumps(value, ensure_ascii=False)
+        return str(value)

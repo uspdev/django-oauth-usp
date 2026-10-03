@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from dj_database_url import parse as dburl
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
@@ -26,12 +24,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_extensions',
     'django_oauth_usp.accounts'
 ]
 
 ALLOWED_UNIDADES = [14]
-REDIRECT_URI = '/user'
+REDIRECT_URI = '/authorize'
 REDIRECT_AFTER_LOGOUT_URL = '/login'
 
 TEMPLATES = [

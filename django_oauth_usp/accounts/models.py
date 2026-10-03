@@ -1,4 +1,6 @@
+import ast
 import json
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
@@ -26,7 +28,6 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'login'
     REQUIRED_FIELDS = ['name', 'user_type', 'main_email']
     EMAIL_FIELD = 'main_email'
-    ALLOWED_UNIDADES = str(settings.ALLOWED_UNIDADES)
 
     class Meta:
         verbose_name = _('user')
@@ -39,7 +40,7 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         names = self.name.split()
-        return names[0]
+        return names[0] if names else ''
 
     def email_user(self, subject, message, from_email=None):
         send_mail(subject, message, from_email, [self.main_email])
@@ -48,45 +49,44 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
         return self.formatted_phone
 
     def is_servidor(self):
-        bind = self.get_bind()
-        for item in bind:
-            if item["tipoVinculo"] == 'SERVIDOR':
-                return True
-
-        return False
+        return self._get_bind_servidor() is not None
 
     def unidade_is_allowed(self):
-        bind = self.get_bind()
-        for item in bind:
-            codigo_unidade = item["codigoUnidade"]
-            if str(codigo_unidade) in self.ALLOWED_UNIDADES:
-                return True
-
-        return False
-    
-    def prepare_json_string(self, json_string: str):
-        prepared = json_string.replace("'", '"')
-        prepared = prepared.replace('None', '"None"')
-        return prepared
+        """Compara os códigos exatos: a unidade 1 não pode passar por estar contida em 14."""
+        allowed = {str(codigo) for codigo in settings.ALLOWED_UNIDADES}
+        return any(str(item.get('codigoUnidade')) in allowed
+                   for item in self.get_bind())
 
     def get_bind(self):
-        bind = self.prepare_json_string(self.bind)
-        return json.loads(bind)
+        """
+        Vínculos do usuário como lista de dicts. Aceita JSON e, para registros
+        gravados pelas versões anteriores, o repr do Python. Vínculo vazio ou
+        inválido (como o de um superusuário criado pelo createsuperuser) vira [].
+        """
+        if not self.bind:
+            return []
+        try:
+            bind = json.loads(self.bind)
+        except ValueError:
+            try:
+                bind = ast.literal_eval(self.bind)
+            except (ValueError, SyntaxError):
+                return []
+        if not isinstance(bind, list):
+            return []
+        return [item for item in bind if isinstance(item, dict)]
+
+    def _get_bind_servidor(self):
+        return next((item for item in self.get_bind()
+                     if item.get('tipoVinculo') == 'SERVIDOR'), None)
 
     def get_funcao(self):
-        bind = self.get_bind()
-        funcao = [item.get("tipoFuncao") for item in bind if item["tipoVinculo"] == "SERVIDOR"][0]
-        if funcao:
-            return funcao
-        return None
+        servidor = self._get_bind_servidor() or {}
+        return servidor.get('tipoFuncao') or None
 
     def get_vinculo(self):
-        bind = self.get_bind()
-        return [item.get("tipoVinculo") for item in bind]
+        return [item.get('tipoVinculo') for item in self.get_bind()]
 
     def get_setor(self):
-        bind = self.get_bind()
-        setor = [item.get("nomeAbreviadoSetor") for item in bind if item["tipoVinculo"] == "SERVIDOR"][0]
-        if setor:
-            return setor
-        return None
+        servidor = self._get_bind_servidor() or {}
+        return servidor.get('nomeAbreviadoSetor') or None
