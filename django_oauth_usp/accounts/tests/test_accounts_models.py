@@ -85,11 +85,11 @@ class UserModelTest(TestCase):
         user = self.make_user(bind="[{'codigoUnidade': 12}]")
         self.assertTrue(user.unidade_is_allowed())
 
-    @override_settings(ALLOWED_UNIDADES='__all__')
-    def test_all_unidades(self):
-        for bind in ("[{'codigoUnidade': 1}]", ''):
-            with self.subTest(bind=bind):
-                self.assertTrue(UserModel(bind=bind).unidade_is_allowed())
+    def test_unidade_zero_allows_all(self):
+        for allowed in ([0], ['0'], [14, 0]):
+            for bind in ("[{'codigoUnidade': 1}]", ''):
+                with self.subTest(allowed=allowed, bind=bind), override_settings(ALLOWED_UNIDADES=allowed):
+                    self.assertTrue(UserModel(bind=bind).unidade_is_allowed())
 
     @override_settings(ALLOWED_UNIDADES=[])
     def test_empty_allowed_unidades(self):

@@ -9,7 +9,7 @@ class CheckAllowedUnidadesTest(SimpleTestCase):
         return [message.id for message in check_allowed_unidades(None)]
 
     def test_valid(self):
-        for allowed in ([14], (12, 13), ['14'], '__all__'):
+        for allowed in ([14], (12, 13), ['14'], [0]):
             with self.subTest(allowed=allowed), override_settings(ALLOWED_UNIDADES=allowed):
                 self.assertEqual([], self.ids())
 
@@ -19,7 +19,7 @@ class CheckAllowedUnidadesTest(SimpleTestCase):
         self.assertEqual(['django_oauth_usp.E001'], self.ids())
 
     def test_invalid_type(self):
-        for allowed in (14, '14', 'all', None):
+        for allowed in (14, '14', 'all', '__all__', None):
             with self.subTest(allowed=allowed), override_settings(ALLOWED_UNIDADES=allowed):
                 self.assertEqual(['django_oauth_usp.E002'], self.ids())
 

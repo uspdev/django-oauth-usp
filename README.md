@@ -58,7 +58,10 @@ a dificuldade de alteração do model User depois de realizada a primeira migrat
     `ALLOWED_UNIDADES` é obrigatório:
 
     * `[12, 13, 14]`: só entra quem tem vínculo com uma dessas unidades.
-    * `'__all__'`: entra qualquer pessoa com Senha Única USP, com ou sem vínculo.
+    * `[0]`: entra qualquer pessoa com Senha Única USP, com ou sem vínculo. O
+      código `0` libera todas as unidades mesmo junto de outros códigos. Funciona
+      também com o `python-decouple`:
+      `config('ALLOWED_UNIDADES', cast=Csv(int))` com `ALLOWED_UNIDADES=0` no `.env`.
     * `[]`: só superusuários entram (o `manage.py check` mostra um aviso).
 
     Se `ALLOWED_UNIDADES` não for definido ou tiver outro tipo, o `manage.py check`

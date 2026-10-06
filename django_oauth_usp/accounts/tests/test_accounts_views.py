@@ -212,7 +212,7 @@ class AuthorizeFlowTest(TestCase):
             self.assertEqual('Ana Pereira', UserModel.objects.get().name)
             self.assertNotIn('_auth_user_id', self.client.session)
 
-    @override_settings(ALLOWED_UNIDADES='__all__')
+    @override_settings(ALLOWED_UNIDADES=[0])
     def test_all_unidades_logs_in_anyone(self):
         resource = {k: v for k, v in RESOURCE.items() if k != 'vinculo'}
         resp = self.authorize(resource)
